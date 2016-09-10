@@ -43,7 +43,7 @@ def train():
     summary_op = tf.merge_all_summaries()
     
     #gpu_options = tf.GPUOptions(allow_growth=True)
-    gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.8) 
+    gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.5) 
     
     with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
         init = tf.initialize_all_variables()
