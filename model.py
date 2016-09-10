@@ -64,7 +64,8 @@ class Network(object):
         
         D = x.get_shape()[3]
         output_ch = 32
-        num_classes = coco_input.NUM_CLASSES
+        dataset = coco_input.get_dataset()
+        num_classes = dataset.num_classes
         feat = x
 
         # 28x28
@@ -101,7 +102,8 @@ class Network(object):
 
 
 def get_loss(labels, logits):
-    vector_labels = tf.one_hot(labels, coco_input.NUM_CLASSES, dtype=tf.float32)
+    dataset = coco_input.get_dataset()
+    vector_labels = tf.one_hot(labels, dataset.num_classes, dtype=tf.float32)
     
     entropy = tf.reduce_mean(
         tf.nn.softmax_cross_entropy_with_logits(logits, vector_labels), name="entropy")

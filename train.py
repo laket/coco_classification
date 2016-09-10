@@ -27,8 +27,8 @@ def get_opt(loss, global_step):
 
 def train():
     global_step = tf.Variable(0, trainable=False)
-    
-    labels, images = coco_input.validate_input()
+    dataset = coco_input.get_dataset()
+    labels, images = dataset.validate_input()
 
     network = model.Network(is_train=True)
     logits = network.inference(images)

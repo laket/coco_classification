@@ -20,59 +20,97 @@ import config
 
 
 FLAGS = tf.app.flags.FLAGS
-NUM_CLASSES = None
+_DATASET = None
 
-def get_target_categories():
-    global NUM_CLASSES
-    
-    with open(FLAGS.path_targets, "r") as f:
-        categories = [int(l[:-1]) for l in f.readlines()]
+def get_dataset():
+    global _DATASET
+    if _DATASET is None:
+        _DATASET = Dataset()
+    return _DATASET
 
-    NUM_CLASSES = len(categories)
-    print ("target {} categories".format(len(categories)))
-    return categories
-
-
-def enumerate_files(root_dir, categories):
+class Dataset(object):
     """
-    enuemrate data in a directory.
-    Target categories are specified with args.
-    root_dir/
-      1/
-         xxxx.jpg
-      2/ (category)
-      
-    
-    Args:
-      root_dir: contains image data
-      categories: list of int. categories to be enumerated 
-    Returns:
-      (labels, paths)
-      labels = [0,1,0,1...]
+    Dataset manager
     """
-    labels = []
-    paths = []
+    def __init__(self):
+        categories = self._get_target_categories()
+        map_categories = {}
 
-    for category in categories:
-        cur_dir = os.path.join(root_dir, str(category))
+        #TODO remain category mapping as output file
+        for idx, cat in enumerate(categories):
+            map_categories[cat] = idx
 
-        cur_paths = [os.path.join(cur_dir, c) for c in os.listdir(cur_dir)]
-        paths += cur_paths
-        labels += [category] * len(cur_paths)
+        self.num_classes = len(categories)
+        self.map_categories = map_categories
+
+        self.size_validation = None
+
+    def _get_target_categories(self):
+        with open(FLAGS.path_targets, "r") as f:
+            categories = [int(l[:-1]) for l in f.readlines()]
+
+        print ("target {} categories".format(len(categories)))
+        return categories
+
+
+    def _enumerate_files(self, root_dir):
+        """
+        enuemrate data in a directory.
+        Target categories are specified with args.
+        root_dir/
+          1/
+            xxxx.jpg
+          2/ (category)
+
+        Args:
+          root_dir: contains image data
+          categories: list of int. categories to be enumerated
+          label_mapping: dictionary from original label to this model's label, label_mapping[src] = dest
+        Returns:
+        (labels, paths)
+        labels = [0,1,0,1...]
+        """
+        labels = []
+        paths = []
+        
+        for src_category, dest_category in self.map_categories.items():
+            cur_dir = os.path.join(root_dir, str(src_category))
+
+            cur_paths = [os.path.join(cur_dir, c) for c in os.listdir(cur_dir)]
+            paths += cur_paths
+            labels += [dest_category] * len(cur_paths)
+            
+        return labels, paths
+
+    def get_validation_size(self):
+        if self.size_validation is None:
+            self.validate_input()
+            
+        return self.size_validation
+
+    def validate_input(self):
+        categories = self._get_target_categories()
+        labels, paths = self._enumerate_files(FLAGS.dir_val)
+
+        label, path = tf.train.slice_input_producer([labels, paths], shuffle=True, capacity=4096)
+        self.size_validation = len(labels)
     
-    return labels, paths
+        image = read_image(path)
+        preprocessed = preprocess_image(image)
 
-def validate_input():
-    categories = get_target_categories()
-    labels, paths = enumerate_files(FLAGS.dir_val, categories)
-
-    label, path = tf.train.slice_input_producer([labels, paths], shuffle=True, capacity=4096)
-    print len(labels)
-    image = read_image(path)
-    preprocessed = preprocess_image(image)
-
-    return make_batch(label, preprocessed)
+        return self.make_batch(label, preprocessed)
     
+
+
+    def make_batch(self, label, image):
+        labels, images = tf.train.batch([label, image],
+                                        FLAGS.batch_size,
+                                        num_threads=4,
+                                        capacity=128
+        )
+        
+        return labels, images
+
 
 def read_image(path):
     content = tf.read_file(path)
@@ -95,12 +133,3 @@ def preprocess_image(image):
 
     float_image = tf.cast(reshaped, dtype=tf.float32)
     return float_image / 255
-
-def make_batch(label, image):
-    labels, images = tf.train.batch([label, image],
-                                    FLAGS.batch_size,
-                                    num_threads=4,
-                                    capacity=128
-    )
-
-    return labels, images
