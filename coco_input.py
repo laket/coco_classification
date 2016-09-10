@@ -99,7 +99,7 @@ def preprocess_image(image):
 def make_batch(label, image):
     labels, images = tf.train.batch([label, image],
                                     FLAGS.batch_size,
-                                    num_threads=2,
+                                    num_threads=4,
                                     capacity=128
     )
 

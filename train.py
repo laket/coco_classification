@@ -42,7 +42,8 @@ def train():
     saver = tf.train.Saver(tf.trainable_variables())
     summary_op = tf.merge_all_summaries()
     
-    gpu_options = tf.GPUOptions(allow_growth=True) 
+    #gpu_options = tf.GPUOptions(allow_growth=True)
+    gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.8) 
     
     with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
         init = tf.initialize_all_variables()
@@ -62,8 +63,8 @@ def train():
                 examples_per_sec = num_examples_per_step / duration
                 sec_per_batch = float(duration)
                 
-                print ("entropy = {:.2f} loss = {:.2f} ({:.1f} examples/sec; {:.1f} sec/batch)"
-                       .format(value_entropy, value_loss, examples_per_sec, sec_per_batch))
+                print ("step = {} entropy = {:.2f} loss = {:.2f} ({:.1f} examples/sec; {:.1f} sec/batch)"
+                       .format(num_iter, value_entropy, value_loss, examples_per_sec, sec_per_batch))
 
             if num_iter % 100 == 0:
                 summary_str = sess.run(summary_op)
