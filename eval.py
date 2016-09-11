@@ -57,7 +57,9 @@ def eval_once(summary_writer, top_k_op, entropy):
     num_iter = total_sample_count / FLAGS.batch_size
     entropies = []
         
-    for i in range(num_iter):
+    #for i in range(num_iter):
+    # limit for performance (samples are chosen randomly)
+    for i in range(min(num_iter, 1000)):
         predictions, value_entropy = sess.run([top_k_op, entropy])
         true_count += np.sum(predictions)
         step += 1

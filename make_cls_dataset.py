@@ -23,8 +23,11 @@ import numpy as np
 from pycocotools.coco import COCO
 
 
-dataDir = "/data/val2014"
-annFile = "/data/annotations/instances_val2014.json"
+#dataDir = "/data/val2014"
+#annFile = "/data/annotations/instances_val2014.json"
+
+dataDir = "/data/train2014"
+annFile = "/data/annotations/instances_train2014.json"
 
 def get_image_path(coco, image_id):
     img = coco.loadImgs([image_id])[0]

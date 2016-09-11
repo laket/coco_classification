@@ -92,21 +92,33 @@ class Dataset(object):
         categories = self._get_target_categories()
         labels, paths = self._enumerate_files(FLAGS.dir_val)
 
-        label, path = tf.train.slice_input_producer([labels, paths], shuffle=True, capacity=4096)
-        self.size_validation = len(labels)
+        self.size_validation = len(labels)        
+        label, path = tf.train.slice_input_producer([labels, paths], shuffle=True, capacity=512)
+
     
         image = read_image(path)
         preprocessed = preprocess_image(image)
 
         return self.make_batch(label, preprocessed)
+
+    def train_input(self):
+        categories = self._get_target_categories()
+        labels, paths = self._enumerate_files(FLAGS.dir_train)
+
+        label, path = tf.train.slice_input_producer([labels, paths], shuffle=True, capacity=512)
+        self.size_validation = len(labels)
     
+        image = read_image(path)
+        preprocessed = preprocess_image(image)
+        preprocessed = tf.image.random_flip_left_right(preprocessed)
 
-
+        return self.make_batch(label, preprocessed)
+    
     def make_batch(self, label, image):
         labels, images = tf.train.batch([label, image],
                                         FLAGS.batch_size,
                                         num_threads=4,
-                                        capacity=128
+                                        capacity=256
         )
         
         return labels, images

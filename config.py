@@ -6,7 +6,10 @@ import tensorflow as tf
 
 
 ###########  DATA  ####################
-tf.app.flags.DEFINE_string("dir_val", "/data/coco_cls",
+tf.app.flags.DEFINE_string("dir_train", "/ramdisk/coco_train_cls",
+                           "train directory.")
+
+tf.app.flags.DEFINE_string("dir_val", "/ramdisk/coco_cls",
                            "validation directory.")
 
 tf.app.flags.DEFINE_string("path_targets", "./target_id.txt",

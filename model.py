@@ -6,7 +6,7 @@ from tensorflow.python.ops import gen_nn_ops
 
 import coco_input
 
-def _var(name, shape, wd=0.001,initializer=None):
+def _var(name, shape, wd=0.00001,initializer=None):
     #sqrt(3. / (in + out))
     if initializer is None:
         initializer = tf.contrib.layers.xavier_initializer()
@@ -32,20 +32,25 @@ class Layer(object):
         self.input_shape = in_feat.get_shape()
         N, H, W, C = self.input_shape
         feat = in_feat
+        now_ch = C
 
         with tf.variable_scope(self.name):
-            with tf.variable_scope("conv0"):
-                self.w = _var("W", [3,3,C,self.output_ch])
-                self.b = _var("b", [self.output_ch],initializer=tf.constant_initializer())
+            for idx_conv in range(1):
+                with tf.variable_scope("conv{}".format(idx_conv)):
+                    self.w = _var("W", [3,3,now_ch,self.output_ch])
+                    self.b = _var("b", [self.output_ch],initializer=tf.constant_initializer())
                     
-                feat = tf.nn.conv2d(feat, self.w, strides=[1,1,1,1],padding="VALID")
-                feat = feat + self.b
-                feat = tf.nn.relu(feat)
+                    feat = tf.nn.conv2d(feat, self.w, strides=[1,1,1,1],padding="VALID")
+                    feat = feat + self.b
+                    feat = tf.nn.relu(feat)
+                    now_ch = self.output_ch
                     
             feat = tf.nn.max_pool(feat, [1,2,2,1], strides=[1,2,2,1],padding="SAME")
 
+            """
             if self.is_train:
                 feat = tf.nn.dropout(feat, keep_prob=self.retain_ratio)
+            """
                     
         return feat
 
@@ -69,7 +74,7 @@ class Network(object):
         feat = x
 
         # 28x28
-        for idx_layer in range(5):
+        for idx_layer in range(4):
             name = "layer{}".format(idx_layer)
 
             if idx_layer == 0:
@@ -78,7 +83,7 @@ class Network(object):
                 layer = Layer(name, output_ch, is_train=self.is_train)
 
             feat = layer.inference(feat)
-            output_ch *= 2
+            output_ch = int(output_ch * 1.4)
 
             feats.append(feat)
             layers.append(layer)
@@ -91,19 +96,27 @@ class Network(object):
         # Global Average Pooling
         with tf.variable_scope("GAP"):
             N, H, W, C = feat.get_shape()
-            w = _var("W", [H,W,C,num_classes])
+            # 1x1 convolution
+            w = _var("W", [1,1,C,num_classes])
             b = _var("b", [num_classes],initializer=tf.constant_initializer())
                     
-            feat = tf.nn.conv2d(feat, w, strides=[1,1,1,1],padding="VALID")
-            logits = feat + b
-            logits = tf.contrib.layers.flatten(logits)
+            feat = tf.nn.conv2d(feat, w, strides=[1,1,1,1],padding="SAME")
+            feat = feat + b
+            feat = tf.nn.relu(feat)
+
+            # avg pool
+            feat = tf.nn.avg_pool(feat, [1,H,W,1], strides=[1,1,1,1],padding="VALID")    
+            logits = tf.contrib.layers.flatten(feat)
     
         return logits
 
 
 def get_loss(labels, logits):
     dataset = coco_input.get_dataset()
+    tf.histogram_summary("logits", logits)    
+    
     vector_labels = tf.one_hot(labels, dataset.num_classes, dtype=tf.float32)
+    tf.histogram_summary("labels", labels)    
     
     entropy = tf.reduce_mean(
         tf.nn.softmax_cross_entropy_with_logits(logits, vector_labels), name="entropy")
