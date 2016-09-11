@@ -6,7 +6,7 @@ from tensorflow.python.ops import gen_nn_ops
 
 import coco_input
 
-def _var(name, shape, wd=0.00001,initializer=None):
+def _var(name, shape, wd=0.001,initializer=None):
     #sqrt(3. / (in + out))
     if initializer is None:
         initializer = tf.contrib.layers.xavier_initializer()
@@ -16,6 +16,15 @@ def _var(name, shape, wd=0.00001,initializer=None):
         weight_decay = tf.mul(tf.nn.l2_loss(var), wd, name='weight_loss')
         tf.add_to_collection('losses', weight_decay)
     return var
+
+def batch_norm(x):
+    mean, variance = tf.nn.moments(x, axes=[0, 1, 2])
+    depth = x.get_shape()[-1]
+    beta =  _var("beta", shape=depth, initializer=tf.constant_initializer(0.0))
+    gamma = _var("gamma", shape=depth, initializer=tf.constant_initializer(1.0))
+
+    return tf.nn.batch_normalization(x, mean, variance, beta, gamma, 1e-05)
+
 
 class Layer(object):
     """
@@ -35,13 +44,13 @@ class Layer(object):
         now_ch = C
 
         with tf.variable_scope(self.name):
-            for idx_conv in range(1):
+            for idx_conv in range(2):
                 with tf.variable_scope("conv{}".format(idx_conv)):
                     self.w = _var("W", [3,3,now_ch,self.output_ch])
-                    self.b = _var("b", [self.output_ch],initializer=tf.constant_initializer())
                     
                     feat = tf.nn.conv2d(feat, self.w, strides=[1,1,1,1],padding="VALID")
-                    feat = feat + self.b
+                    feat = batch_norm(feat)
+                    
                     feat = tf.nn.relu(feat)
                     now_ch = self.output_ch
                     
@@ -83,7 +92,7 @@ class Network(object):
                 layer = Layer(name, output_ch, is_train=self.is_train)
 
             feat = layer.inference(feat)
-            output_ch = int(output_ch * 1.4)
+            output_ch = int(output_ch * 2)
 
             feats.append(feat)
             layers.append(layer)

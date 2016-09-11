@@ -41,7 +41,7 @@ tf.app.flags.DEFINE_integer('eval_interval_secs', 60,
 ############ OPTIMIZE ###################
 tf.app.flags.DEFINE_integer('max_steps', 500000,
                             """max_steps""")
-tf.app.flags.DEFINE_float('lr', 0.1,
+tf.app.flags.DEFINE_float('lr', 0.01,
                             """initial learning rate.""")
 tf.app.flags.DEFINE_float('decay_rate', 0.1,
                             """decay rate.""")

@@ -53,22 +53,24 @@ def eval_once(summary_writer, top_k_op, entropy):
     dataset = coco_input.get_dataset()
     true_count = 0    # Counts the number of correct predictions.
     total_sample_count = dataset.get_validation_size()
-    step = 0
+
     num_iter = total_sample_count / FLAGS.batch_size
     entropies = []
+    use_sample_count = 0
         
     #for i in range(num_iter):
     # limit for performance (samples are chosen randomly)
     for i in range(min(num_iter, 1000)):
         predictions, value_entropy = sess.run([top_k_op, entropy])
         true_count += np.sum(predictions)
-        step += 1
+        use_sample_count += FLAGS.batch_size
         entropies.append(value_entropy)
 
     # Compute precision @ 1.
-    precision = true_count / float(total_sample_count)
+    precision = true_count / float(use_sample_count)
     mean_entropy = float(np.mean(entropies))
-    
+
+    print ("use data {} / {}".format(use_sample_count, total_sample_count))
     print('step %d precision @ 1 = %.2f entropy = %.2f' % (int(global_step), precision, mean_entropy))
 
     summary = tf.Summary()
