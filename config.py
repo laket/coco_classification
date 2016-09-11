@@ -33,7 +33,7 @@ tf.app.flags.DEFINE_string('dir_parameter', './parameter',
                            """Directory where to write parameters""")
 tf.app.flags.DEFINE_string('dir_log_val', './validation_log',
                            """Directory where to write validation logs """)
-tf.app.flags.DEFINE_integer('eval_interval_secs', 60,
+tf.app.flags.DEFINE_integer('eval_interval_secs', 120,
                             """How often to run the eval.""")
 
 
@@ -45,7 +45,7 @@ tf.app.flags.DEFINE_float('lr', 0.01,
                             """initial learning rate.""")
 tf.app.flags.DEFINE_float('decay_rate', 0.1,
                             """decay rate.""")
-tf.app.flags.DEFINE_integer('decay_steps', 100000,
+tf.app.flags.DEFINE_integer('decay_steps', 40000,
                             """decay_steps""")
 
 

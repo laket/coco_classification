@@ -19,7 +19,11 @@ def get_opt(loss, global_step):
                                     staircase=True)
     
     opt = tf.train.MomentumOptimizer(lr, momentum=0.95)
-    opt_op = opt.minimize(loss, global_step=global_step)
+    update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+    print update_ops
+    
+    with tf.control_dependencies(update_ops):
+        opt_op = opt.minimize(loss, global_step=global_step)
 
     tf.scalar_summary("lr", lr)
 
@@ -51,6 +55,8 @@ def train():
         tf.histogram_summary(var.op.name, var)
     
     entropy, loss = model.get_loss(labels, logits)
+
+    
     lr, opt = get_opt(loss, global_step)
 
     saver = tf.train.Saver(tf.trainable_variables())

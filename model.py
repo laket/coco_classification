@@ -17,13 +17,15 @@ def _var(name, shape, wd=0.001,initializer=None):
         tf.add_to_collection('losses', weight_decay)
     return var
 
-def batch_norm(x):
-    mean, variance = tf.nn.moments(x, axes=[0, 1, 2])
-    depth = x.get_shape()[-1]
-    beta =  _var("beta", shape=depth, initializer=tf.constant_initializer(0.0))
-    gamma = _var("gamma", shape=depth, initializer=tf.constant_initializer(1.0))
+_COLLECTION_BATCHNORM_UPDATER = "batchnorm"
 
-    return tf.nn.batch_normalization(x, mean, variance, beta, gamma, 1e-05)
+def get_update_op():
+    """
+    return operation to be run for each iteration for update variables.
+    """
+    collection = tf.get_collection(_COLLECTION_BATCHNORM_UPDATER)
+    op = tf.group(collection)
+    return op
 
 
 class Layer(object):
@@ -45,11 +47,12 @@ class Layer(object):
 
         with tf.variable_scope(self.name):
             for idx_conv in range(2):
-                with tf.variable_scope("conv{}".format(idx_conv)):
+                with tf.variable_scope("conv{}".format(idx_conv)) as scope:
                     self.w = _var("W", [3,3,now_ch,self.output_ch])
                     
                     feat = tf.nn.conv2d(feat, self.w, strides=[1,1,1,1],padding="VALID")
-                    feat = batch_norm(feat)
+
+                    feat = tf.contrib.layers.batch_norm(feat, center=True, scale=False, scope=scope, is_training=self.is_train)
                     
                     feat = tf.nn.relu(feat)
                     now_ch = self.output_ch
