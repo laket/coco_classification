@@ -20,16 +20,16 @@ FLAGS = tf.app.flags.FLAGS
 
 
 def restore_model(saver, sess):
-  ckpt = tf.train.get_checkpoint_state(FLAGS.dir_parameter)
-  if ckpt and ckpt.model_checkpoint_path:
-    # Restores from checkpoint
-    saver.restore(sess, ckpt.model_checkpoint_path)
-    global_step = ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1]
-  else:
-    print('No checkpoint file found')
-    return None
+    ckpt = tf.train.get_checkpoint_state(FLAGS.dir_parameter)
+    if ckpt and ckpt.model_checkpoint_path:
+      # Restores from checkpoint
+      saver.restore(sess, ckpt.model_checkpoint_path)
+      global_step = ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1]
+    else:
+      print('No checkpoint file found')
+      return None
     
-  return global_step
+    return global_step
 
 def eval_once(summary_writer, top_k_op, entropy):
     saver = tf.train.Saver(tf.trainable_variables())

@@ -8,6 +8,8 @@ import tensorflow as tf
 ###########  DATA  ####################
 tf.app.flags.DEFINE_string("dir_train", "/ramdisk/coco_train_cls",
                            "train directory.")
+tf.app.flags.DEFINE_string("dir_pretrain", None,
+                           "pretrain directory.")
 
 tf.app.flags.DEFINE_string("dir_val", "/ramdisk/coco_cls",
                            "validation directory.")
@@ -39,7 +41,7 @@ tf.app.flags.DEFINE_integer('eval_interval_secs', 60,
 ############ OPTIMIZE ###################
 tf.app.flags.DEFINE_integer('max_steps', 500000,
                             """max_steps""")
-tf.app.flags.DEFINE_float('lr', 0.01,
+tf.app.flags.DEFINE_float('lr', 0.1,
                             """initial learning rate.""")
 tf.app.flags.DEFINE_float('decay_rate', 0.1,
                             """decay rate.""")

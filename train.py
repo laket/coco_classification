@@ -25,6 +25,20 @@ def get_opt(loss, global_step):
 
     return lr, opt_op
 
+def restore_model(saver, sess):
+    ckpt = tf.train.get_checkpoint_state(FLAGS.dir_pretrain)
+    if ckpt and ckpt.model_checkpoint_path:
+        # Restores from checkpoint
+        saver.restore(sess, ckpt.model_checkpoint_path)
+        print ("resotre from {}".format(ckpt.model_checkpoint_path))
+        global_step = ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1]
+    else:
+        print('No checkpoint file found')
+        return None
+    
+    return global_step
+
+
 def train():
     global_step = tf.Variable(0, trainable=False)
     dataset = coco_input.get_dataset()
@@ -48,6 +62,9 @@ def train():
     with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
         init = tf.initialize_all_variables()
         sess.run(init)
+        if FLAGS.dir_pretrain is not None:
+            restore_model(saver, sess)        
+        
         summary_writer = tf.train.SummaryWriter("log", sess.graph)        
         
         tf.train.start_queue_runners(sess=sess)
