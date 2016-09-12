@@ -20,7 +20,6 @@ def get_opt(loss, global_step):
     
     opt = tf.train.MomentumOptimizer(lr, momentum=0.95)
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-    print update_ops
     
     with tf.control_dependencies(update_ops):
         opt_op = opt.minimize(loss, global_step=global_step)
@@ -58,8 +57,6 @@ def train():
 
     
     lr, opt = get_opt(loss, global_step)
-
-    saver = tf.train.Saver(tf.trainable_variables())
     summary_op = tf.merge_all_summaries()
     
     #gpu_options = tf.GPUOptions(allow_growth=True)
@@ -69,11 +66,13 @@ def train():
         init = tf.initialize_all_variables()
         sess.run(init)
         if FLAGS.dir_pretrain is not None:
+            saver = tf.train.Saver(model.get_pretrain_variables())
             restore_model(saver, sess)        
         
         summary_writer = tf.train.SummaryWriter("log", sess.graph)        
         
         tf.train.start_queue_runners(sess=sess)
+        saver = tf.train.Saver(model.get_restore_variables())        
 
         for num_iter in range(1,FLAGS.max_steps+1):
             start_time = time.time()

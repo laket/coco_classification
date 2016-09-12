@@ -32,7 +32,7 @@ def restore_model(saver, sess):
     return global_step
 
 def eval_once(summary_writer, top_k_op, entropy):
-    saver = tf.train.Saver(tf.trainable_variables())
+    saver = tf.train.Saver(model.get_restore_variables())
     # Build an initialization operation to run below.
     init = tf.initialize_all_variables()
 

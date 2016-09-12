@@ -17,15 +17,23 @@ def _var(name, shape, wd=0.001,initializer=None):
         tf.add_to_collection('losses', weight_decay)
     return var
 
-_COLLECTION_BATCHNORM_UPDATER = "batchnorm"
+_COLLECTION_BATCHNORM_VARIABLES = "batchnorms"
 
-def get_update_op():
+def get_restore_variables():
     """
-    return operation to be run for each iteration for update variables.
+    return variables to be restored for eval
     """
-    collection = tf.get_collection(_COLLECTION_BATCHNORM_UPDATER)
-    op = tf.group(collection)
-    return op
+    variables = tf.get_collection(_COLLECTION_BATCHNORM_VARIABLES)
+
+    return variables + tf.trainable_variables()
+
+def get_pretrain_variables():
+    """
+    return variables to be restored from pretrained model    
+
+    """
+    return tf.trainable_variables()
+
 
 
 class Layer(object):
@@ -52,7 +60,7 @@ class Layer(object):
                     
                     feat = tf.nn.conv2d(feat, self.w, strides=[1,1,1,1],padding="VALID")
 
-                    feat = tf.contrib.layers.batch_norm(feat, center=True, scale=False, scope=scope, is_training=self.is_train)
+                    feat = tf.contrib.layers.batch_norm(feat, center=True, scale=False, scope=scope, is_training=self.is_train, variables_collections=[_COLLECTION_BATCHNORM_VARIABLES])
                     
                     feat = tf.nn.relu(feat)
                     now_ch = self.output_ch
