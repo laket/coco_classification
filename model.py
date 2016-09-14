@@ -54,7 +54,7 @@ class Layer(object):
         now_ch = C
 
         with tf.variable_scope(self.name):
-            for idx_conv in range(2):
+            for idx_conv in range(3):
                 with tf.variable_scope("conv{}".format(idx_conv)) as scope:
                     self.w = _var("W", [3,3,now_ch,self.output_ch])
                     
@@ -116,17 +116,18 @@ class Network(object):
         # Global Average Pooling
         with tf.variable_scope("GAP"):
             N, H, W, C = feat.get_shape()
-            # 1x1 convolution
-            w = _var("W", [1,1,C,num_classes])
-            b = _var("b", [num_classes],initializer=tf.constant_initializer())
-                    
-            feat = tf.nn.conv2d(feat, w, strides=[1,1,1,1],padding="SAME")
-            feat = feat + b
-            feat = tf.nn.relu(feat)
 
             # avg pool
-            feat = tf.nn.avg_pool(feat, [1,H,W,1], strides=[1,1,1,1],padding="VALID")    
-            logits = tf.contrib.layers.flatten(feat)
+            feat = tf.nn.avg_pool(feat, [1,H,W,1], strides=[1,1,1,1],padding="VALID") 
+
+            # [batch_size, 1, 1, C] -> [batch_size, C]
+            feat = tf.reshape(feat, [int(N), int(C)])
+            
+            # fc layer
+            W = _var("W", [C,num_classes], initializer=tf.truncated_normal_initializer(stddev=0.01))
+            b = _var("b", [num_classes],initializer=tf.constant_initializer())
+                    
+            logits = tf.matmul(feat, W) + b
     
         return logits
 
