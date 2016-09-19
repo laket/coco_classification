@@ -109,6 +109,8 @@ class Dataset(object):
         self.size_validation = len(labels)
     
         image = read_image(path)
+        image = tf.image.random_contrast(image, 0.5, 3.0)
+        
         preprocessed = preprocess_image(image)
         preprocessed = tf.image.random_flip_left_right(preprocessed)
 
@@ -139,8 +141,9 @@ def preprocess_image(image):
     :return: preprocessed image
     :rtype: Tensor
     """
-    batch_image = tf.expand_dims(image, 0)
-    resized = tf.image.resize_images(batch_image, FLAGS.image_height, FLAGS.image_width)
+    resized = tf.image.resize_images(image, FLAGS.image_height, FLAGS.image_width)
+
+    #resized = tf.image.resize_image_with_crop_or_pad(image, FLAGS.image_height, FLAGS.image_width)
     reshaped = tf.reshape(resized, [FLAGS.image_height, FLAGS.image_width, 3])
 
     float_image = tf.cast(reshaped, dtype=tf.float32)

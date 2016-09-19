@@ -94,7 +94,7 @@ class Network(object):
         feat = x
 
         # 28x28
-        for idx_layer in range(4):
+        for idx_layer in range(5):
             name = "layer{}".format(idx_layer)
 
             if idx_layer == 0:
